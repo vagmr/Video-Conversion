@@ -1,7 +1,4 @@
-using System;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 
 namespace VideoConverter
 {
@@ -43,7 +40,7 @@ namespace VideoConverter
             Console.WriteLine("  --crf [值]                 设置视频质量 (默认: 28)");
             Console.WriteLine("  --preset [值]              设置编码速度 (默认: slow)");
             Console.WriteLine("  --audio-codec [值]         设置音频编码格式 (默认: aac)");
-            Console.WriteLine("  --resolution [值]          设置视频分辨率 (例如：720, 480)");
+            Console.WriteLine("  -r, --resolution [值]      设置视频分辨率 (例如：720, 480)");
             Console.WriteLine("  -h, --help                 显示帮助信息");
             Console.WriteLine("\n示例:");
             Console.WriteLine("  VideoConverter input.mp4 -o output.mp4 --crf 24 --preset fast --audio-codec copy --resolution 720");
@@ -53,13 +50,14 @@ namespace VideoConverter
     class VideoConverter
     {
         public void ConvertToHevc(
-            string inputFile,
-            string? outputFile = null,
-            int crf = 28,
-            string preset = "slow",
-            string audioCodec = "aac",
-            string? resolution = null)
+      string inputFile,
+      string? outputFile = null,
+      int crf = 28,
+      string preset = "slow",
+      string audioCodec = "aac",
+      string? resolution = null)
         {
+            Console.WriteLine($"调试信息：分辨率参数 = {resolution ?? "未设置"}");
             if (!File.Exists(inputFile))
             {
                 throw new FileNotFoundException($"未找到输入文件: {inputFile}");
@@ -68,11 +66,15 @@ namespace VideoConverter
             outputFile ??= GenerateOutputFilename(inputFile);
 
             Console.WriteLine($"开始转换：{inputFile} => {outputFile}");
-            var resolutionOption = string.IsNullOrEmpty(resolution) ? "" : $"scale=-2:{resolution}";
+
+            // 修复分辨率参数处理
+            var resolutionOption = string.IsNullOrEmpty(resolution) ? "" : $"-vf scale=-2:{resolution}";
+
             var ffmpegCommand = new ProcessStartInfo
             {
                 FileName = "ffmpeg",
-                Arguments = $"-y -i \"{inputFile}\"  -c:v hevc_nvenc -preset {preset} -vf {resolutionOption} -crf {crf} -c:a {audioCodec} \"{outputFile}\"",
+                // 移除多余的空格，只在实际有分辨率参数时添加 -vf
+                Arguments = $"-y -i \"{inputFile}\" -c:v hevc_nvenc -preset {preset} {resolutionOption} -crf {crf} -c:a {audioCodec} \"{outputFile}\"",
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
@@ -144,7 +146,7 @@ namespace VideoConverter
             Crf = int.Parse(GetArgumentValue(args, "--crf") ?? "28");
             Preset = GetArgumentValue(args, "--preset") ?? "slow";
             AudioCodec = GetArgumentValue(args, "--audio-codec") ?? "aac";
-            Resolution = GetArgumentValue(args, "--resolution");
+            Resolution = GetArgumentValue(args, "-r", "--resolution");
         }
 
         private string? GetArgumentValue(string[] args, params string[] argumentNames)
