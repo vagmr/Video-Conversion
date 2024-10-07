@@ -68,11 +68,11 @@ namespace VideoConverter
             outputFile ??= GenerateOutputFilename(inputFile);
 
             Console.WriteLine($"开始转换：{inputFile} => {outputFile}");
-            var resolutionOption = string.IsNullOrEmpty(resolution) ? "" : $"-vf \"scale=-2:{resolution}\"";
+            var resolutionOption = string.IsNullOrEmpty(resolution) ? "" : $"scale=-2:{resolution}";
             var ffmpegCommand = new ProcessStartInfo
             {
                 FileName = "ffmpeg",
-                Arguments = $"-y -i \"{inputFile}\" {resolutionOption} -c:v hevc_nvenc -preset {preset} -crf {crf} -c:a {audioCodec} \"{outputFile}\"",
+                Arguments = $"-y -i \"{inputFile}\"  -c:v hevc_nvenc -preset {preset} -vf {resolutionOption} -crf {crf} -c:a {audioCodec} \"{outputFile}\"",
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
@@ -89,6 +89,7 @@ namespace VideoConverter
 
             try
             {
+                Console.WriteLine($"执行命令: {ffmpegCommand.FileName} {ffmpegCommand.Arguments}");
                 process.Start();
                 process.BeginErrorReadLine();
                 process.WaitForExit();
