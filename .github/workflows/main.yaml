@@ -1,0 +1,98 @@
+name: Build and Release Video Converter
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - "v*"
+  pull_request:
+    branches: [main]
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 6.0.x #
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build Executables
+        run: |
+          echo "开始构建过程..."
+          dotnet build -c Release
+          echo "构建完成。发布框架依赖版本..."
+          dotnet publish -c Release -p:PublishSingleFile=true --no-self-contained -o "${{ github.workspace }}\bin\Release\fd"
+          echo "框架依赖版本发布完成。发布自包含版本..."
+          dotnet publish -c Release -r win-x64 -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true --self-contained true -o "${{ github.workspace }}\bin\Release\sc"
+          echo "自包含版本发布完成。"
+
+      - name: Prepare Release Files
+        run: |
+          Write-Host "列出 bin\Release 目录的内容："
+          Get-ChildItem -Path "${{ github.workspace }}\bin\Release" -Recurse | Select-Object FullName
+
+          $fdPath = "${{ github.workspace }}\bin\Release\fd\VideoConverter.exe"
+          $scPath = "${{ github.workspace }}\bin\Release\sc\VideoConverter.exe"
+          $fdDestPath = "${{ github.workspace }}\bin\Release\VideoConverter-Framework-dependent.exe"
+          $scDestPath = "${{ github.workspace }}\bin\Release\VideoConverter-Self-contained.exe"
+
+          Copy-Item -Path $fdPath -Destination $fdDestPath
+          Copy-Item -Path $scPath -Destination $scDestPath
+
+          echo "FD_BUILD_PATH=$fdDestPath" >> $env:GITHUB_ENV
+          echo "SC_BUILD_PATH=$scDestPath" >> $env:GITHUB_ENV
+
+          Write-Host "最终的可执行文件："
+          Get-ChildItem -Path "${{ github.workspace }}\bin\Release\VideoConverter-*.exe" | Select-Object FullName
+
+      - name: Verify Executables
+        run: |
+          $fdSize = (Get-Item "${{ env.FD_BUILD_PATH }}").Length
+          $scSize = (Get-Item "${{ env.SC_BUILD_PATH }}").Length
+          Write-Host "框架依赖版本大小: $fdSize 字节"
+          Write-Host "自包含版本大小: $scSize 字节"
+          if ($fdSize -eq $scSize) {
+            Write-Warning "警告：框架依赖版本和自包含版本大小相同，可能存在构建问题"
+          }
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Framework-dependent Release Asset
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.FD_BUILD_PATH }}
+          asset_name: VideoConverter-Framework-dependent.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload Self-contained Release Asset
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.SC_BUILD_PATH }}
+          asset_name: VideoConverter-Self-contained.exe
+          asset_content_type: application/octet-stream
