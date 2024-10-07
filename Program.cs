@@ -39,9 +39,9 @@ namespace VideoConverter
         {
             Console.WriteLine("用法: VideoConverter [输入文件] [选项]");
             Console.WriteLine("选项:");
-            Console.WriteLine("  -o, --output [文件路径]    指定输出文件路径");
+            Console.WriteLine("  -o, --output [文件路径]    指定输出文件路径,可以省略 (默认随机生成)");
             Console.WriteLine("  --crf [值]                 设置视频质量 (默认: 28)");
-            Console.WriteLine("  --preset [值]              设置编码速度 (默认: slower)");
+            Console.WriteLine("  --preset [值]              设置编码速度 (默认: slow)");
             Console.WriteLine("  --audio-codec [值]         设置音频编码格式 (默认: aac)");
             Console.WriteLine("  --resolution [值]          设置视频分辨率 (例如：720, 480)");
             Console.WriteLine("  -h, --help                 显示帮助信息");
@@ -68,7 +68,7 @@ namespace VideoConverter
             outputFile ??= GenerateOutputFilename(inputFile);
 
             Console.WriteLine($"开始转换：{inputFile} => {outputFile}");
-            var resolutionOption = string.IsNullOrEmpty(resolution) ? "" : $"-vf scale=-2:{resolution}";
+            var resolutionOption = string.IsNullOrEmpty(resolution) ? "" : $"-vf \"scale=-2:{resolution}\"";
             var ffmpegCommand = new ProcessStartInfo
             {
                 FileName = "ffmpeg",
@@ -135,7 +135,7 @@ namespace VideoConverter
         {
             if (args.Length == 0)
             {
-                throw new ArgumentException("必须提供输入文件路径");
+                throw new ArgumentException("必须提供输入文件路径,使用-h或--help查看帮助信息");
             }
 
             InputFile = args[0];
