@@ -12,6 +12,13 @@ namespace VideoConverter
         {
             try
             {
+                // 检查是否包含帮助标志
+                if (args.Contains("-h") || args.Contains("--help"))
+                {
+                    PrintHelp();
+                    return;
+                }
+
                 var parser = new ArgumentParser(args);
                 var converter = new VideoConverter();
                 converter.ConvertToHevc(
@@ -26,6 +33,19 @@ namespace VideoConverter
             {
                 Console.WriteLine($"错误: {ex.Message}");
             }
+        }
+
+        static void PrintHelp()
+        {
+            Console.WriteLine("用法: VideoConverter [输入文件] [选项]");
+            Console.WriteLine("选项:");
+            Console.WriteLine("  -o, --output [文件路径]    指定输出文件路径");
+            Console.WriteLine("  --crf [值]                 设置视频质量 (默认: 28)");
+            Console.WriteLine("  --preset [值]              设置编码速度 (默认: slower)");
+            Console.WriteLine("  --audio-codec [值]         设置音频编码格式 (默认: aac)");
+            Console.WriteLine("  -h, --help                 显示帮助信息");
+            Console.WriteLine("\n示例:");
+            Console.WriteLine("  VideoConverter input.mp4 -o output.mp4 --crf 24 --preset fast --audio-codec copy");
         }
     }
 
