@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace VideoConverter
 {
@@ -26,7 +25,8 @@ namespace VideoConverter
                     parser.OutputFile,
                     parser.Crf,
                     parser.Preset,
-                    parser.AudioCodec
+                    parser.AudioCodec,
+                    parser.Resolution
                 );
             }
             catch (Exception ex)
@@ -43,9 +43,10 @@ namespace VideoConverter
             Console.WriteLine("  --crf [值]                 设置视频质量 (默认: 28)");
             Console.WriteLine("  --preset [值]              设置编码速度 (默认: slower)");
             Console.WriteLine("  --audio-codec [值]         设置音频编码格式 (默认: aac)");
+            Console.WriteLine("  --resolution [值]          设置视频分辨率 (例如：720, 480)");
             Console.WriteLine("  -h, --help                 显示帮助信息");
             Console.WriteLine("\n示例:");
-            Console.WriteLine("  VideoConverter input.mp4 -o output.mp4 --crf 24 --preset fast --audio-codec copy");
+            Console.WriteLine("  VideoConverter input.mp4 -o output.mp4 --crf 24 --preset fast --audio-codec copy --resolution 720");
         }
     }
 
@@ -56,7 +57,8 @@ namespace VideoConverter
             string? outputFile = null,
             int crf = 28,
             string preset = "slow",
-            string audioCodec = "aac")
+            string audioCodec = "aac",
+            string? resolution = null)
         {
             if (!File.Exists(inputFile))
             {
@@ -65,10 +67,12 @@ namespace VideoConverter
 
             outputFile ??= GenerateOutputFilename(inputFile);
 
+            Console.WriteLine($"开始转换：{inputFile} => {outputFile}");
+            var resolutionOption = string.IsNullOrEmpty(resolution) ? "" : $"-vf scale=-2:{resolution}";
             var ffmpegCommand = new ProcessStartInfo
             {
                 FileName = "ffmpeg",
-                Arguments = $"-y -i \"{inputFile}\" -c:v hevc_nvenc -preset {preset} -crf {crf} -c:a {audioCodec} \"{outputFile}\"",
+                Arguments = $"-y -i \"{inputFile}\" {resolutionOption} -c:v hevc_nvenc -preset {preset} -crf {crf} -c:a {audioCodec} \"{outputFile}\"",
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
@@ -125,6 +129,7 @@ namespace VideoConverter
         public int Crf { get; }
         public string Preset { get; }
         public string AudioCodec { get; }
+        public string? Resolution { get; }
 
         public ArgumentParser(string[] args)
         {
@@ -136,8 +141,9 @@ namespace VideoConverter
             InputFile = args[0];
             OutputFile = GetArgumentValue(args, "-o", "--output");
             Crf = int.Parse(GetArgumentValue(args, "--crf") ?? "28");
-            Preset = GetArgumentValue(args, "--preset") ?? "slower";
+            Preset = GetArgumentValue(args, "--preset") ?? "slow";
             AudioCodec = GetArgumentValue(args, "--audio-codec") ?? "aac";
+            Resolution = GetArgumentValue(args, "--resolution");
         }
 
         private string? GetArgumentValue(string[] args, params string[] argumentNames)
