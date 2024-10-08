@@ -1,0 +1,13 @@
+{
+    "workbench.colorTheme": "Visual Studio Dark",
+    "workbench.iconTheme": "material-icon-theme",
+     "editor.tokenColorCustomizations": {
+    "comments": {
+      "fontStyle": "bold",
+      "foreground": "#b81469"
+    }
+  },
+  "powermode.combo.location": "editor",
+  "powermode.explosions.size": 3,
+  "powermode.explosions.offset": 0.1
+}

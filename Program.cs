@@ -16,8 +16,7 @@ namespace VideoConverter
                 }
 
                 var parser = new ArgumentParser(args);
-                var converter = new VideoConverter();
-                converter.ConvertToHevc(
+                VideoConverter.ConvertToHevc(
                     parser.InputFile,
                     parser.OutputFile,
                     parser.Crf,
@@ -47,71 +46,144 @@ namespace VideoConverter
         }
     }
 
-    class VideoConverter
+    static class VideoConverter
     {
-        public void ConvertToHevc(
-      string inputFile,
-      string? outputFile = null,
-      int crf = 28,
-      string preset = "slow",
-      string audioCodec = "aac",
-      string? resolution = null)
+
+        private static readonly string[] ValidPresets = { "ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow" };
+        private static readonly string[] ValidAudioCodecs = { "aac", "copy", "mp3" };
+        private const int MinCrf = 0;
+        private const int MaxCrf = 51;
+
+        public static void ConvertToHevc(
+          string inputFile,
+          string? outputFile = null,
+          int crf = 28,
+          string preset = "slow",
+          string audioCodec = "aac",
+          string? resolution = null)
         {
             Console.WriteLine($"调试信息：分辨率参数 = {resolution ?? "未设置"}");
-            if (!File.Exists(inputFile))
-            {
-                throw new FileNotFoundException($"未找到输入文件: {inputFile}");
-            }
+            ValidateInputParameters(inputFile, crf, preset, audioCodec, resolution);
 
             outputFile ??= GenerateOutputFilename(inputFile);
+
+            ValidateOutputFile(outputFile);
 
             Console.WriteLine($"开始转换：{inputFile} => {outputFile}");
 
             // 修复分辨率参数处理
             var resolutionOption = string.IsNullOrEmpty(resolution) ? "" : $"-vf scale=-2:{resolution}";
 
-            var ffmpegCommand = new ProcessStartInfo
+
+            var ffmpegCommand = CreateFfmpegCommand(inputFile, outputFile, crf, preset, audioCodec, resolutionOption);
+            ExecuteFfmpegCommand(ffmpegCommand);
+        }
+        private static void ValidateInputParameters(string inputFile, int crf, string preset, string audioCodec, string? resolution)
+        {
+            ValidateInputFile(inputFile);
+            ValidateCrf(crf);
+            ValidatePreset(preset);
+            ValidateAudioCodec(audioCodec);
+            ValidateResolution(resolution);
+        }
+        private static void ValidateInputFile(string inputFile)
+        {
+            if (string.IsNullOrWhiteSpace(inputFile))
+            {
+                throw new ArgumentException("输入文件路径不能为空", nameof(inputFile));
+            }
+            if (!File.Exists(inputFile))
+            {
+                throw new FileNotFoundException($"未找到输入文件: {inputFile}");
+            }
+        }
+
+        private static void ValidateCrf(int crf)
+        {
+            if (crf < MinCrf || crf > MaxCrf)
+            {
+                throw new ArgumentOutOfRangeException(nameof(crf), $"CRF 值必须在 {MinCrf} 到 {MaxCrf} 之间");
+            }
+        }
+
+        private static void ValidatePreset(string preset)
+        {
+            if (!ValidPresets.Contains(preset.ToLower()))
+            {
+                throw new ArgumentException($"无效的 preset 值: {preset}。有效值为: {string.Join(", ", ValidPresets)}", nameof(preset));
+            }
+        }
+
+        private static void ValidateAudioCodec(string audioCodec)
+        {
+            if (!ValidAudioCodecs.Contains(audioCodec.ToLower()))
+            {
+                throw new ArgumentException($"无效的音频编码格式: {audioCodec}。有效值为: {string.Join(", ", ValidAudioCodecs)}", nameof(audioCodec));
+            }
+        }
+
+        private static void ValidateResolution(string? resolution)
+        {
+            if (!string.IsNullOrEmpty(resolution))
+            {
+                if (!int.TryParse(resolution, out int resolutionValue) || resolutionValue <= 0)
+                {
+                    throw new ArgumentException("分辨率必须是正整数", nameof(resolution));
+                }
+            }
+        }
+
+        private static void ValidateOutputFile(string outputFile)
+        {
+            var outputDirectory = Path.GetDirectoryName(outputFile);
+            if (!Directory.Exists(outputDirectory))
+            {
+                throw new DirectoryNotFoundException($"输出目录不存在: {outputDirectory}");
+            }
+        }
+        private static ProcessStartInfo CreateFfmpegCommand(string inputFile, string outputFile, int crf, string preset, string audioCodec, string resolutionOption)
+        {
+            return new ProcessStartInfo
             {
                 FileName = "ffmpeg",
-                // 移除多余的空格，只在实际有分辨率参数时添加 -vf
                 Arguments = $"-y -i \"{inputFile}\" -c:v hevc_nvenc -preset {preset} {resolutionOption} -crf {crf} -c:a {audioCodec} \"{outputFile}\"",
                 RedirectStandardError = true,
+                RedirectStandardOutput = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
+        }
 
+        private static void ExecuteFfmpegCommand(ProcessStartInfo ffmpegCommand)
+        {
             using var process = new Process { StartInfo = ffmpegCommand };
-            process.ErrorDataReceived += (sender, e) =>
-            {
-                if (!string.IsNullOrEmpty(e.Data))
-                {
-                    Console.WriteLine(e.Data);
-                }
-            };
+            process.ErrorDataReceived += (sender, e) => Console.WriteLine(e.Data);
+            process.OutputDataReceived += (sender, e) => Console.WriteLine(e.Data);
 
             try
             {
                 Console.WriteLine($"执行命令: {ffmpegCommand.FileName} {ffmpegCommand.Arguments}");
                 process.Start();
                 process.BeginErrorReadLine();
+                process.BeginOutputReadLine();
                 process.WaitForExit();
 
                 if (process.ExitCode == 0)
                 {
-                    Console.WriteLine($"转换成功：{outputFile}");
+                    Console.WriteLine($"转换成功：{ffmpegCommand.Arguments.Split('"').LastOrDefault()}");
                 }
                 else
                 {
-                    Console.WriteLine($"转换失败，返回码：{process.ExitCode}");
+                    throw new Exception($"转换失败，FFmpeg 返回码：{process.ExitCode}");
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"转换过程中发生错误：{ex.Message}");
+                throw;
             }
         }
-
-        private string GenerateOutputFilename(string inputFile)
+        private static string GenerateOutputFilename(string inputFile)
         {
             var random = new Random();
             var chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -143,13 +215,29 @@ namespace VideoConverter
 
             InputFile = args[0];
             OutputFile = GetArgumentValue(args, "-o", "--output");
-            Crf = int.Parse(GetArgumentValue(args, "--crf") ?? "28");
+            Crf = ParseIntArgumentOrDefault(args, "--crf", 28);
             Preset = GetArgumentValue(args, "--preset") ?? "slow";
             AudioCodec = GetArgumentValue(args, "--audio-codec") ?? "aac";
             Resolution = GetArgumentValue(args, "-r", "--resolution");
         }
+        private static int ParseIntArgumentOrDefault(string[] args, string argName, int defaultValue)
+        {
+            var value = GetArgumentValue(args, argName);
+            if (value == null)
+            {
+                return defaultValue;
+            }
 
-        private string? GetArgumentValue(string[] args, params string[] argumentNames)
+            if (!int.TryParse(value, out int result))
+            {
+                Console.WriteLine($"无效的 {argName} 值: {value}。应为一个整数,将使用默认值: {defaultValue}");
+                return defaultValue;
+            }
+
+            return result;
+        }
+
+        private static string? GetArgumentValue(string[] args, params string[] argumentNames)
         {
             for (int i = 0; i < args.Length - 1; i++)
             {
