@@ -13,14 +13,18 @@ namespace VideoConverter
                 }
 
                 var parser = new ArgumentParser(args);
-                VideoConverter.ConvertToHevc(
-                    parser.InputFile,
-                    parser.OutputFile,
-                    parser.Crf,
-                    parser.Preset,
-                    parser.AudioCodec,
-                    parser.Resolution
-                );
+                foreach (var inputFile in parser.InputFiles)
+                {
+                    VideoConverter.ConvertToHevc(
+                        inputFile,
+                        parser.OutputFile,
+                        parser.Crf,
+                        parser.Preset,
+                        parser.AudioCodec,
+                        parser.Resolution
+                    );
+                }
+
             }
             catch (Exception ex)
             {

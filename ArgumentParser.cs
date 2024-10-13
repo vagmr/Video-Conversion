@@ -1,8 +1,11 @@
+using System.ComponentModel;
+
 namespace VideoConverter
 {
     public class ArgumentParser
     {
-        public string InputFile { get; }
+        //Todo 实现批量
+        public List<string> InputFiles { get; }
         public string? OutputFile { get; }
         public int Crf { get; }
         public string Preset { get; }
@@ -16,7 +19,20 @@ namespace VideoConverter
                 throw new ArgumentException("必须提供输入文件路径,使用-h或--help查看帮助信息");
             }
 
-            InputFile = args[0];
+            InputFiles = new List<string>();
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (args[i].StartsWith("-") || args[i].StartsWith("--"))
+                {
+                    break;
+                }
+
+                InputFiles.Add(args[i]);
+            }
+            if (InputFiles.Count == 0)
+            {
+                throw new ArgumentException("至少需要提供一个输入文件路径,使用-h或--help查看帮助信息");
+            }
             OutputFile = GetArgumentValue(args, "-o", "--output");
             Crf = ParseIntArgumentOrDefault(args, "-c", "--crf", 28);
             Preset = GetArgumentValue(args, "-p", "--preset") ?? "slow";
