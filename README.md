@@ -33,13 +33,53 @@ CLI for converting h264 video to h265 video using FFmpeg
 VideoConverter [输入文件] [选项]
 ```
 
+## 开发说明
+1.clone 项目
+```bash
+git clone https://github.com/vagmr/video-conversion.git
+```
+2. 配置.net 6.0 sdk
+```bash
+dotnet tool install --global dotnet-sdk
+```
+3. 编辑源代码
+4. 编译
+```bash
+dotnet publish -c Release -p:PublishSingleFile=true --no-self-contained  -o .\build\ .\VideoConverter.csproj
+```
+
+
 ### 选项
 
 - `-o, --output [文件路径]`: 指定输出文件路径（可选，默认随机生成）
-- `--crf [值]`: 设置视频质量（默认：28，范围：0-51，越低质量越好）
-- `--preset [值]`: 设置编码速度（默认：slow）
-- `--audio-codec [值]`: 设置音频编码格式（默认：aac）
+- `-c, --crf [值]`: 设置视频质量（默认：28，范围：0-51，越低质量越好）
+- `-p, --preset [值]`: 设置编码速度（默认：slow）
+preset 参数详细说明：
+
+| 预设       | 编号 | 描述                |
+|------------|------|---------------------|
+| default    | 0    | 默认值，等同于 p4   |
+| slow       | 1    | 高质量，2 次编码 (HQ)|
+| medium     | 2    | 中等质量，1 次编码 (HQ)|
+| fast       | 3    | 高性能 (HP)         |
+| hp         | 4    | 高性能              |
+| hq         | 5    | 高质量              |
+| bd         | 6    | Blu-ray 兼容性      |
+| ll         | 7    | 低延迟编码          |
+| llhq       | 8    | 低延迟高质量        |
+| llhp       | 9    | 低延迟高性能        |
+| lossless   | 10   | 无损编码            |
+| losslesshp | 11   | 无损高性能          |
+| p1         | 12   | 最快，质量最低      |
+| p2         | 13   | 较快，较低质量      |
+| p3         | 14   | 快速，低质量        |
+| p4         | 15   | 中等，默认          |
+| p5         | 16   | 较慢，高质量        |
+| p6         | 17   | 更慢，更好质量      |
+| p7         | 18   | 最慢，最佳质量      |
+- `-ac, --audio-codec [值]`: 设置音频编码格式（默认：aac）
 - `-r, --resolution [值]`: 设置视频分辨率（例如：720, 480）
+- `-e, --encoder [值]`: 设置编码器（默认：nvenc）
 - `-h, --help`: 显示帮助信息
 
 ### 示例
@@ -76,5 +116,8 @@ VideoConverter input.mp4 --resolution 720 --preset fast
 2. Q: 为什么转换后的文件比原文件大？
    A: h265 编码通常会产生比 h264 更小的文件，但这取决于你设置的 CRF 值和原视频的编码质量。尝试增加 CRF 值（例如从 28 增加到 30）来减小文件大小，但这可能会略微降低视频质量。
 
-3. Q: 能否批量转换多个视频文件？
-   A: 当前版本不支持批量转换。但你可以创建一个简单的批处理脚本来循环处理多个文件,也许在下一个版本中会加入批量转换功能。
+## 更新日志
+
+- 添加了批量转换功能
+- 添加了 libx265 编码器支持
+

@@ -11,7 +11,7 @@ namespace VideoConverter
         public string Preset { get; }
         public string AudioCodec { get; }
         public string? Resolution { get; }
-
+        public string Encoder { get; }
         public ArgumentParser(string[] args)
         {
             if (args.Length == 0)
@@ -35,9 +35,10 @@ namespace VideoConverter
             }
             OutputFile = GetArgumentValue(args, "-o", "--output");
             Crf = ParseIntArgumentOrDefault(args, "-c", "--crf", 28);
-            Preset = GetArgumentValue(args, "-p", "--preset") ?? "slow";
+            Preset = GetArgumentValue(args, "-p", "--preset") ?? "fast";
             AudioCodec = GetArgumentValue(args, "-ac", "--audio-codec") ?? "aac";
             Resolution = GetArgumentValue(args, "-r", "--resolution");
+            Encoder = GetArgumentValue(args, "-e", "--encoder") ?? "nvenc";
         }
 
         private static int ParseIntArgumentOrDefault(string[] args, string shortArg, string longArg, int defaultValue)

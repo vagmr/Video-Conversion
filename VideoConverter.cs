@@ -8,9 +8,10 @@ namespace VideoConverter
             string inputFile,
             string? outputFile = null,
             int crf = 28,
-            string preset = "slow",
+            string preset = "fast",
             string audioCodec = "aac",
-            string? resolution = null)
+            string? resolution = null,
+            string encoder = "nvenc")
         {
             Console.WriteLine($"调试信息：分辨率参数 = {resolution ?? "未设置"}");
             ValidateInputParameters(inputFile, crf, preset, audioCodec, resolution);
@@ -21,7 +22,7 @@ namespace VideoConverter
 
             var resolutionOption = string.IsNullOrEmpty(resolution) ? "" : $"-vf scale=-2:{resolution}";
 
-            var ffmpegCommand = CreateFfmpegCommand(inputFile, outputFile, crf, preset, audioCodec, resolutionOption);
+            var ffmpegCommand = CreateFfmpegCommand(inputFile, outputFile, crf, preset, audioCodec, resolutionOption, encoder);
             ExecuteFfmpegCommand(ffmpegCommand);
         }
 
@@ -29,7 +30,7 @@ namespace VideoConverter
         {
             ValidateInputFile(inputFile);
             ValidateCrf(crf);
-            ValidatePreset(preset);
+            ValidatePreset(preset, encoder: "nvenc");
             ValidateAudioCodec(audioCodec);
             ValidateResolution(resolution);
         }
@@ -54,18 +55,20 @@ namespace VideoConverter
             }
         }
 
-        private static void ValidatePreset(string preset)
+        private static void ValidatePreset(string preset, string encoder)
         {
+            string[] validPresets = encoder == "libx265" ? Constants.ValidPresetsForLibx265 : Constants.ValidPresetsForNvenc;
+
             if (int.TryParse(preset, out int presetIndex))
             {
-                if (presetIndex < 0 || presetIndex >= Constants.ValidPresets.Length)
+                if (presetIndex < 0 || presetIndex >= validPresets.Length)
                 {
-                    throw new ArgumentException($"无效的 preset 值: {preset}。数字应在 0 到 {Constants.ValidPresets.Length - 1} 之间", nameof(preset));
+                    throw new ArgumentException($"无效的 preset 值: {preset}。数字应在 0 到 {validPresets.Length - 1} 之间", nameof(preset));
                 }
             }
-            else if (!Constants.ValidPresets.Contains(preset.ToLower()))
+            else if (!validPresets.Contains(preset.ToLower()))
             {
-                throw new ArgumentException($"无效的 preset 值: {preset}。有效值为: {string.Join(", ", Constants.ValidPresets)} 或 0-{Constants.ValidPresets.Length - 1}", nameof(preset));
+                throw new ArgumentException($"无效的 preset 值: {preset}。有效值为: {string.Join(", ", validPresets)} 或 0-{validPresets.Length - 1}", nameof(preset));
             }
         }
 
@@ -88,17 +91,21 @@ namespace VideoConverter
             }
         }
 
-        private static ProcessStartInfo CreateFfmpegCommand(string inputFile, string outputFile, int crf, string preset, string audioCodec, string resolutionOption)
+        private static ProcessStartInfo CreateFfmpegCommand(string inputFile, string outputFile, int crf, string preset, string audioCodec, string resolutionOption, string encoder)
         {
+            string[] validPresets = encoder == "libx265" ? Constants.ValidPresetsForLibx265 : Constants.ValidPresetsForNvenc;
+
             if (int.TryParse(preset, out int presetIndex))
             {
-                preset = Constants.ValidPresets[presetIndex];
+                preset = validPresets[presetIndex];
             }
+
+            string encoderOption = encoder == "libx265" ? "-c:v libx265" : "-c:v hevc_nvenc";
 
             return new ProcessStartInfo
             {
                 FileName = "ffmpeg",
-                Arguments = $"-y -i \"{inputFile}\" -c:v hevc_nvenc -preset {preset} {resolutionOption} -crf {crf} -c:a {audioCodec} \"{outputFile}\"",
+                Arguments = $"-y -i \"{inputFile}\" {encoderOption} -preset {preset} {resolutionOption} -crf {crf} -c:a {audioCodec} \"{outputFile}\"",
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
