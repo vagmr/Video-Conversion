@@ -11,7 +11,8 @@ namespace VideoConverter
             string preset = "fast",
             string audioCodec = "aac",
             string? resolution = null,
-            string encoder = "nvenc")
+            string encoder = "nvenc",
+            string? bitrate = null)
         {
             Console.WriteLine($"调试信息：分辨率参数 = {resolution ?? "未设置"}");
             ValidateInputParameters(inputFile, crf, preset, audioCodec, resolution, encoder);
@@ -22,7 +23,7 @@ namespace VideoConverter
 
             var resolutionOption = string.IsNullOrEmpty(resolution) ? "" : $"-vf scale=-2:{resolution}";
 
-            var ffmpegCommand = CreateFfmpegCommand(inputFile, outputFile, crf, preset, audioCodec, resolutionOption, encoder);
+            var ffmpegCommand = CreateFfmpegCommand(inputFile, outputFile, crf, preset, audioCodec, resolutionOption, encoder, bitrate);
             ExecuteFfmpegCommand(ffmpegCommand);
         }
 
@@ -95,7 +96,7 @@ namespace VideoConverter
             }
         }
 
-        private static ProcessStartInfo CreateFfmpegCommand(string inputFile, string outputFile, int crf, string preset, string audioCodec, string resolutionOption, string encoder)
+        private static ProcessStartInfo CreateFfmpegCommand(string inputFile, string outputFile, int crf, string preset, string audioCodec, string resolutionOption, string encoder, string? bitrate)
         {
             string[] validPresets = encoder == "libx265" ? Constants.ValidPresetsForLibx265 : Constants.ValidPresetsForNvenc;
 
@@ -106,10 +107,12 @@ namespace VideoConverter
 
             string encoderOption = encoder == "libx265" ? "-c:v libx265" : "-c:v hevc_nvenc";
 
+            string bitrateOption = string.IsNullOrEmpty(bitrate) ? "" : $"-b:v {bitrate}";
+
             return new ProcessStartInfo
             {
                 FileName = "ffmpeg",
-                Arguments = $"-y -i \"{inputFile}\" {encoderOption} -preset {preset} {resolutionOption} -crf {crf} -c:a {audioCodec} \"{outputFile}\"",
+                Arguments = $"-y -i \"{inputFile}\" {encoderOption} -preset {preset} {resolutionOption} {bitrateOption} -crf {crf} -c:a {audioCodec} \"{outputFile}\"",
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
@@ -156,7 +159,7 @@ namespace VideoConverter
 
             return Path.Combine(
                 Path.GetDirectoryName(inputFile) ?? "",
-                $"{Path.GetFileNameWithoutExtension(inputFile)}_hevc_{randomString}{Path.GetExtension(inputFile)}"
+                $"{Path.GetFileNameWithoutExtension(inputFile)}_h265_{randomString}{Path.GetExtension(inputFile)}"
             );
         }
     }

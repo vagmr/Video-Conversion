@@ -4,7 +4,7 @@ namespace VideoConverter
 {
     public class ArgumentParser
     {
-        //Todo 实现批量
+        //Todo 实现批量(已完成)
         public List<string> InputFiles { get; }
         public string? OutputFile { get; }
         public int Crf { get; }
@@ -12,6 +12,7 @@ namespace VideoConverter
         public string AudioCodec { get; }
         public string? Resolution { get; }
         public string Encoder { get; }
+        public string? Bitrate { get; }
         public ArgumentParser(string[] args)
         {
             if (args.Length == 0)
@@ -39,6 +40,7 @@ namespace VideoConverter
             AudioCodec = GetArgumentValue(args, "-ac", "--audio-codec") ?? "aac";
             Resolution = GetArgumentValue(args, "-r", "--resolution");
             Encoder = GetArgumentValue(args, "-e", "--encoder") ?? "nvenc";
+            Bitrate = GetArgumentValue(args, "-b", "--bitrate");
         }
 
         private static int ParseIntArgumentOrDefault(string[] args, string shortArg, string longArg, int defaultValue)

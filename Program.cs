@@ -28,7 +28,8 @@ namespace VideoConverter
                         parser.Preset,
                         parser.AudioCodec,
                         parser.Resolution,
-                        parser.Encoder
+                        parser.Encoder,
+                        parser.Bitrate
                     );
                 }
             }
@@ -57,6 +58,7 @@ namespace VideoConverter
             Console.WriteLine("  -ac, --audio-codec [值]    设置音频编码格式 (选项: aac, copy, mp3, 默认: aac)");
             Console.WriteLine("  -r, --resolution [值]      设置视频分辨率 (例如：720, 480)");
             Console.WriteLine("  -e, --encoder [值]         设置编码器 (选项: nvenc, libx265, 默认: nvenc)");
+            Console.WriteLine("  -b, --bitrate [值]         设置视频比特率 (例如：5M, 10M,100k, 默认: 自动)");
             Console.WriteLine("  -h, --help                 显示帮助信息");
             Console.WriteLine("\n编码器预设 (preset) 说明,详细说明可查询文档或仓库:");
             Console.WriteLine("  对于 nvenc 编码器:");
@@ -67,7 +69,7 @@ namespace VideoConverter
             Console.WriteLine("    可用预设: ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow");
             Console.WriteLine("    或者使用数字 0-8 (0:ultrafast, 1:superfast, 2:veryfast, ...)");
             Console.WriteLine("\n示例:");
-            Console.WriteLine("  VideoConverter input.mp4 -o output.mp4 -c 24 -p fast -ac copy -r 720 -e nvenc");
+            Console.WriteLine("  VideoConverter input.mp4 -o output.mp4 -c 24 -p fast -ac copy -r 720 -e nvenc -b 5M");
             Console.WriteLine("  VideoConverter input.mp4 -e libx265 -p medium -c 28");
         }
     }
