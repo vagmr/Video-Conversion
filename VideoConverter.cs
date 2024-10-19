@@ -14,7 +14,7 @@ namespace VideoConverter
             string encoder = "nvenc")
         {
             Console.WriteLine($"调试信息：分辨率参数 = {resolution ?? "未设置"}");
-            ValidateInputParameters(inputFile, crf, preset, audioCodec, resolution);
+            ValidateInputParameters(inputFile, crf, preset, audioCodec, resolution, encoder);
 
             outputFile ??= GenerateOutputFilename(inputFile);
 
@@ -26,11 +26,11 @@ namespace VideoConverter
             ExecuteFfmpegCommand(ffmpegCommand);
         }
 
-        private static void ValidateInputParameters(string inputFile, int crf, string preset, string audioCodec, string? resolution)
+        private static void ValidateInputParameters(string inputFile, int crf, string preset, string audioCodec, string? resolution, string encoder)
         {
             ValidateInputFile(inputFile);
             ValidateCrf(crf);
-            ValidatePreset(preset, encoder: "nvenc");
+            ValidatePreset(preset, encoder);
             ValidateAudioCodec(audioCodec);
             ValidateResolution(resolution);
         }
@@ -57,6 +57,10 @@ namespace VideoConverter
 
         private static void ValidatePreset(string preset, string encoder)
         {
+            if (encoder != "libx265" && encoder != "nvenc")
+            {
+                throw new ArgumentException("不支持的编码器, 请使用 nvenc 或 libx265", nameof(encoder));
+            }
             string[] validPresets = encoder == "libx265" ? Constants.ValidPresetsForLibx265 : Constants.ValidPresetsForNvenc;
 
             if (int.TryParse(preset, out int presetIndex))

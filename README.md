@@ -54,7 +54,14 @@ dotnet publish -c Release -p:PublishSingleFile=true --no-self-contained  -o .\bu
 - `-o, --output [文件路径]`: 指定输出文件路径（可选，默认随机生成）
 - `-c, --crf [值]`: 设置视频质量（默认：28，范围：0-51，越低质量越好）
 - `-p, --preset [值]`: 设置编码速度（默认：slow）
+- `-ac, --audio-codec [值]`: 设置音频编码格式（默认：aac）
+- `-r, --resolution [值]`: 设置视频分辨率（例如：720, 480）
+- `-e, --encoder [值]`: 设置编码器（默认：nvenc）
+- `-h, --help`: 显示帮助信息
+
+#### 编码器预设 (preset) 说明
 preset 参数详细说明：
+- nvenc 编码器
 
 | 预设       | 编号 | 描述                |
 |------------|------|---------------------|
@@ -77,10 +84,20 @@ preset 参数详细说明：
 | p5         | 16   | 较慢，高质量        |
 | p6         | 17   | 更慢，更好质量      |
 | p7         | 18   | 最慢，最佳质量      |
-- `-ac, --audio-codec [值]`: 设置音频编码格式（默认：aac）
-- `-r, --resolution [值]`: 设置视频分辨率（例如：720, 480）
-- `-e, --encoder [值]`: 设置编码器（默认：nvenc）
-- `-h, --help`: 显示帮助信息
+
+- libx265 编码器
+
+| 预设       | 编号 | 描述                |
+|------------|------|---------------------|
+| ultrafast  | 0    | 最快                  |
+| superfast  | 1    | 较快                  |
+| veryfast   | 2    | 快速                  |
+| faster     | 3    | 更快                  |
+| fast       | 4    | 快速                  |
+| medium     | 5    | 中等                  |
+| slow       | 6    | 较慢                  |
+| slower     | 7    | 更慢                  |
+| veryslow   | 8    | 最慢                  |
 
 ### 示例
 
