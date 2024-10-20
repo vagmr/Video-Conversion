@@ -1,8 +1,10 @@
-namespace VideoConverter
+using VideoConverter.Core;
+
+namespace VideoConverter.CLI
 {
     class Program
     {
-        private const string Version = "0.0.3";
+        private const string Version = "0.0.4";
         private const string Author = "vagmr";
         private const string RepositoryUrl = "https://github.com/vagmr/VideoConverter";
 
@@ -21,7 +23,7 @@ namespace VideoConverter
                 var parser = new ArgumentParser(args);
                 foreach (var inputFile in parser.InputFiles)
                 {
-                    VideoConverter.ConvertToHevc(
+                   Core.VideoConverter.ConvertToHevc(
                         inputFile,
                         parser.OutputFile,
                         parser.Crf,

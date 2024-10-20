@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace VideoConverter
+namespace VideoConverter.Core
 {
     public static class VideoConverter
     {
@@ -161,6 +161,19 @@ namespace VideoConverter
                 Path.GetDirectoryName(inputFile) ?? "",
                 $"{Path.GetFileNameWithoutExtension(inputFile)}_h265_{randomString}{Path.GetExtension(inputFile)}"
             );
+        }
+
+        public static async Task ConvertAsync(
+            string inputFile,
+            string? outputFile = null,
+            int crf = 28,
+            string preset = "fast",
+            string audioCodec = "aac",
+            string? resolution = null,
+            string encoder = "nvenc",
+            string? bitrate = null)
+        {
+            await Task.Run(() => ConvertToHevc(inputFile, outputFile, crf, preset, audioCodec, resolution, encoder, bitrate));
         }
     }
 }

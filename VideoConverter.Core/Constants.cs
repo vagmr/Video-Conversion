@@ -1,4 +1,4 @@
-namespace VideoConverter
+namespace VideoConverter.Core
 {
     public static class Constants
     {

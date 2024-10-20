@@ -1,6 +1,4 @@
-using System.ComponentModel;
-
-namespace VideoConverter
+namespace VideoConverter.Core
 {
     public class ArgumentParser
     {

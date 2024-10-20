@@ -10,11 +10,15 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PublishReadyToRun>true</PublishReadyToRun>
     <AssemblyName>VideoConverter</AssemblyName>
-    <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>0.0.3</Version>
+    <ApplicationIcon>../app.ico</ApplicationIcon>
+    <Version>0.0.4</Version>
     <Authors>vagmr</Authors>
     <Description>一个简单的视频转换工具</Description>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VideoConverter.Core\VideoConverter.Core.csproj" />
+  </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <DebugType>none</DebugType>
